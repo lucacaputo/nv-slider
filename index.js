@@ -1,12 +1,13 @@
 const { styler, spring } = popmotion;
-
+window._nv_resize_throttle = null;
 class Slider {
     constructor(domNode, options={
         margin: 10,
         slidesToShow: 5,
         slideWidth: 'auto',
         arrows: true,
-        inactiveScaling: .7,
+        inactiveScaling: .8,
+        wrapAround: true,
     }) {
         this.domNode = domNode;
         this.options = options;
@@ -20,7 +21,6 @@ class Slider {
             styledSlides: [...domNode.querySelectorAll('._nv_slide')].map(styler),
             activeSlide: 0,
         }
-
         this._init();
     }
 
@@ -31,11 +31,10 @@ class Slider {
     }
 
     _calculateSlideWidth() {
-        const { slideWidth, margin, slidesToShow, inactiveScaling } = this.options;
-        const cw = this.domNode.clientWidth;
-        const contWidth = (cw / inactiveScaling) - (cw/slidesToShow - (cw/slidesToShow*inactiveScaling)) - (margin * slidesToShow);
+        const { slideWidth, margin, slidesToShow } = this.options;
+        const contWidth = this.domNode.clientWidth;
         if (this.options.slideWidth === 'auto') {
-            return (contWidth/slidesToShow) - (margin*2);
+            return (contWidth/slidesToShow) - margin - (margin / slidesToShow);
         }
         if (typeof slideWidth === 'string') {
             if (/px/g.test(slideWidth)) {
@@ -102,7 +101,9 @@ class Slider {
     }
 
     _setTrackLength(slideWidth) {
-        const trackLength = slideWidth * this.state.slides.length;
+        const { inactiveScaling } = this.options;
+        const { slides } = this.state;
+        const trackLength = slideWidth + (slideWidth * inactiveScaling * slides.length);
         this.track.style.width = `${trackLength}px`;
     }
 
@@ -113,7 +114,7 @@ class Slider {
         const trackX = this.track.getBoundingClientRect().x;
         const slx = slides[activeSlide].getBoundingClientRect().x;
         let offset = direction === 'right' ? 
-            (trackX - slx) + (slideWidth * inactiveScaling) / 2 - margin : 
+            trackX - slx + margin + (slideWidth - slideWidth * inactiveScaling) : 
             trackX - slx + margin
         spring({
             from: { x: this.sTrack.get('x') },
@@ -140,25 +141,32 @@ class Slider {
         this.arrows.leftArr.addEventListener("click", () => {
             this.isTransitioning = true;
             this._setState(s => {
+                let nx = this.clamp(s.activeSlide - 1, s.slides.length - 1, -1);
                 return {
-                    activeSlide: this.clamp(s.activeSlide - 1, s.slides.length - 1, 0),
+                    activeSlide: nx === -1 ? s.slides.length - 1 : nx,
                 }
             });
         });
         this.arrows.rightArr.addEventListener("click", () => {
             this.isTransitioning = true;
             this._setState(s => {
+                let nx = this.clamp(s.activeSlide + 1, s.slides.length, 0);
                 return {
-                    activeSlide: this.clamp(s.activeSlide + 1, s.slides.length - 1, 0),
+                    activeSlide: nx === s.slides.length ? 0 : nx,
                 }
             });
         });
         window.addEventListener('resize', () => {
-            const w = this._calculateSlideWidth();
-            this._setSlideWidth(w);
-            this._setTrackLength(w);
-            this._setHeight();
-            this._setOffsets();
+            clearTimeout(window._nv_resize_throttle);
+            window._nv_resize_throttle = setTimeout(() => {
+                const w = this._calculateSlideWidth();
+                this._setSlideWidth(w);
+                this._setTrackLength(w);
+                this._setOffsets();
+                setTimeout(() => {
+                    this._setHeight();
+                }, 300);
+            }, 100);
         });
     }
 
