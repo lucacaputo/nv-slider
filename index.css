@@ -1,0 +1,45 @@
+* {
+    box-sizing: border-box;
+}
+.node {
+    position: relative;
+    overflow-x: hidden;
+}
+._nv_track {
+    position: relative;
+    display: block;
+    padding: 0;
+    height: 100%;
+}
+._nv_slide {
+    position: absolute;
+    display: block;
+    height: auto;
+    border-radius: 5px;
+    border: 1px solid #eee;
+    z-index: 1;
+}
+._nv_arr {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    top: calc(50% - 20px);
+    background-color: #aaa;
+    color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 16px;
+    box-shadow: 0 0 5px #141414;
+    z-index: 3;
+    user-select: none;
+}
+._nv_left_arr {
+    left: 0;
+}
+._nv_right_arr {
+    right: 0;
+}
