@@ -19,7 +19,7 @@ class Slider {
         this.state = {
             slides: [...domNode.querySelectorAll('._nv_slide')],
             styledSlides: [...domNode.querySelectorAll('._nv_slide')].map(styler),
-            activeSlide: 0,
+            activeSlide: 2,
         }
         this._init();
     }
@@ -87,17 +87,31 @@ class Slider {
         })
     }
 
-    _setOffsets() {
+    async _setOffsets() {
         const slideWidth = this._calculateSlideWidth();
         const leftOffset = this._getOffsets(slideWidth);
         const { styledSlides, activeSlide } = this.state;
         const { inactiveScaling } = this.options;
-        styledSlides.forEach((s, i) => {
-            spring({
-                from: { x: s.get('x'), opacity: s.get('opacity'), scale: s.get('scale') },
-                to: { x: leftOffset[i], opacity: 1, scale: i === activeSlide ? 1 : inactiveScaling },
-            }).start(s.set);
+        let promises = styledSlides.map((s, i) => {
+            return new Promise((res, rej) => {
+                try {
+                    spring({
+                        from: { x: s.get('x'), opacity: s.get('opacity'), scale: s.get('scale') },
+                        to: { x: leftOffset[i], opacity: 1, scale: i === activeSlide ? 1 : inactiveScaling },
+                    }).start({
+                        update: s.set,
+                        complete: res,
+                    });
+                } catch(err) {
+                    rej(err);
+                }
+            });
         });
+        await Promise.all(promises)
+            .then(() => {
+                const finish = new Event('offset_set');
+                this.domNode.dispatchEvent(finish);
+            });
     }
 
     _setTrackLength(slideWidth) {
@@ -163,10 +177,11 @@ class Slider {
                 this._setSlideWidth(w);
                 this._setTrackLength(w);
                 this._setOffsets();
-                setTimeout(() => {
-                    this._setHeight();
-                }, 300);
             }, 100);
+        });
+        this.domNode.addEventListener('offset_set',() => {
+            this._setHeight();
+            this._moveTrack();
         });
     }
 

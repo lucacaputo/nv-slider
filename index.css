@@ -4,6 +4,8 @@
 .node {
     position: relative;
     overflow-x: hidden;
+    transition: height .2s ease;
+    will-change: height;
 }
 ._nv_track {
     position: relative;
