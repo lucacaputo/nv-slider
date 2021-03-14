@@ -19,7 +19,7 @@ class Slider {
         this.state = {
             slides: [...domNode.querySelectorAll('._nv_slide')],
             styledSlides: [...domNode.querySelectorAll('._nv_slide')].map(styler),
-            activeSlide: 2,
+            activeSlide: 0,
         }
         this._init();
     }
@@ -83,7 +83,7 @@ class Slider {
             } else {
                 offset = (scaledSlide * i)
             }
-            return offset + margin * i;
+            return offset + margin * i + ((window.innerWidth / 2) - (slideWidth / 2) - margin*2);
         })
     }
 
@@ -128,8 +128,8 @@ class Slider {
         const trackX = this.track.getBoundingClientRect().x;
         const slx = slides[activeSlide].getBoundingClientRect().x;
         let offset = direction === 'right' ? 
-            trackX - slx + margin + (slideWidth - slideWidth * inactiveScaling) : 
-            trackX - slx + margin
+            trackX - slx + margin + (slideWidth - slideWidth * inactiveScaling) + ((window.innerWidth / 2) - (slideWidth / 2) - margin*2) : 
+            trackX - slx + margin + ((window.innerWidth / 2) - (slideWidth / 2) - margin*2)
         spring({
             from: { x: this.sTrack.get('x') },
             to: { x: Math.floor(offset) }
